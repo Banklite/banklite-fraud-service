@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="BankLite - Fraud Detection Service",
-    description="Microservicio de Detecci?n de Fraude, Evaluaci?n de Riesgo y Scoring Antifraude.",
+    description="Microservicio de Detección de Fraude, Evaluación de Riesgo y Scoring Antifraude.",
     version="1.0.0",
     lifespan=lifespan,
 )
