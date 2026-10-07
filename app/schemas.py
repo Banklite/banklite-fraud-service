@@ -23,12 +23,28 @@ class EvaluacionCreate(BaseModel):
     id_transaccion: UUID
     monto_transaccion: float = Field(..., gt=0)
 
+class TransferCheckIn(BaseModel):
+    id_transferencia: UUID
+    id_cuenta_origen: UUID
+    id_cuenta_destino: Optional[UUID] = None
+    monto: float = Field(..., gt=0)
+
+
+class TransferCheckOut(BaseModel):
+    resultado: Literal["aprobada", "revision_manual", "bloqueada"]
+    score_riesgo: float
+    motivo: Optional[str] = None
+    id_evaluacion: UUID
+
+
 class AlertaOut(BaseModel):
     id_alerta: UUID
     id_evaluacion: UUID
     estado: str
     prioridad: str
     fecha_generacion: datetime
+    motivo: Optional[str] = None
+    monto: Optional[float] = None
 
     class Config:
         from_attributes = True
@@ -40,6 +56,9 @@ class EvaluacionOut(BaseModel):
     score_riesgo: float
     resultado: str
     fecha_evaluacion: datetime
+    id_cuenta_origen: Optional[UUID] = None
+    monto: Optional[float] = None
+    motivo: Optional[str] = None
     alertas: List[AlertaOut] = []
 
     class Config:

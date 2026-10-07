@@ -30,6 +30,10 @@ class EvaluacionFraude(Base):
     score_riesgo = Column(Numeric(5, 2), nullable=False)
     resultado = Column(String(50), nullable=False)
     fecha_evaluacion = Column(DateTime, default=datetime.utcnow, nullable=False)
+    # Datos de la transferencia evaluada (para reglas de frecuencia y acumulado)
+    id_cuenta_origen = Column(UUID(as_uuid=True), nullable=True, index=True)
+    monto = Column(Numeric(14, 2), nullable=True)
+    motivo = Column(String(255), nullable=True)
 
     __table_args__ = (
         CheckConstraint("score_riesgo >= 0", name="chk_evaluacion_score_positivo"),
@@ -56,3 +60,11 @@ class AlertaFraude(Base):
     )
 
     evaluacion = relationship("EvaluacionFraude", back_populates="alertas")
+
+    @property
+    def motivo(self):
+        return self.evaluacion.motivo if self.evaluacion else None
+
+    @property
+    def monto(self):
+        return float(self.evaluacion.monto) if self.evaluacion and self.evaluacion.monto is not None else None
