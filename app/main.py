@@ -1,10 +1,14 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, status
+from fastapi import Depends, FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
 from .config import settings
-from .database import Base, engine
+from .database import Base, engine, get_db
+from .models import AlertaFraude
 from .routers import fraud
 from .consumer import start_consumer, stop_consumer
 from .rules import REGLAS_POR_DEFECTO
@@ -58,6 +62,17 @@ app.include_router(fraud.router)
 @app.get("/health", tags=["infra"])
 def health():
     return {"status": "ok", "service": settings.service_name}
+
+
+@app.get("/stats", tags=["infra"])
+def stats(db: Session = Depends(get_db)):
+    return {
+        "total_alertas": db.execute(select(func.count()).select_from(AlertaFraude)).scalar(),
+        "alertas_pendientes": db.execute(
+            select(func.count()).select_from(AlertaFraude).where(AlertaFraude.estado == "abierta")
+        ).scalar(),
+    }
+
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
