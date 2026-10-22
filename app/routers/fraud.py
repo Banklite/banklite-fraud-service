@@ -15,6 +15,8 @@ from ..schemas import (
 )
 from ..rules import VENTANA_RAFAGA_MIN
 from ..events import publish_event, EVENT_FRAUD_ALERT
+from ..geoip import GeoIPError, localizar_ip
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/fraud", tags=["Fraud"])
@@ -193,3 +195,22 @@ def resolver_alerta(id_alerta: uuid.UUID, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(alerta)
     return alerta
+
+class GeoIPRequest(BaseModel):
+    ip: str = Field(min_length=3, max_length=64)
+
+@router.post("/geoip")
+def geoip_post(payload: GeoIPRequest):
+    """Geolocalizacion real de una IP (ip-api.com): pais, ciudad, ISP,
+    proxy/VPN y hosting. Sirve como senal adicional de riesgo."""
+    try:
+        return localizar_ip(payload.ip)
+    except GeoIPError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+@router.get("/geoip/{ip}")
+def geoip_get(ip: str):
+    try:
+        return localizar_ip(ip)
+    except GeoIPError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
