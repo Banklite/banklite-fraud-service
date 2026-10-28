@@ -15,7 +15,7 @@ EVENT_CARD_AUTHORIZED = "card.transaction.authorized"
 EVENT_TRANSFER_COMPLETED = "transfer.completed"
 _stop = threading.Event()
 
-def _evaluar_monto(id_transaccion: uuid.UUID, monto: float):
+def _evaluar_monto(id_transaccion: uuid.UUID, monto: float, id_cuenta: uuid.UUID | None = None):
     db = SessionLocal()
     try:
         regla = db.query(ReglaFraude).filter(ReglaFraude.activa == True).first()
@@ -43,7 +43,9 @@ def _evaluar_monto(id_transaccion: uuid.UUID, monto: float):
             id_transaccion=id_transaccion,
             id_regla=regla.id_regla,
             score_riesgo=score,
-            resultado=resultado
+            resultado=resultado,
+            id_cuenta_origen=id_cuenta,
+            monto=monto,
         )
         db.add(evaluacion)
         db.commit()
@@ -63,6 +65,8 @@ def _evaluar_monto(id_transaccion: uuid.UUID, monto: float):
                 "id_alerta": str(alerta.id_alerta),
                 "id_evaluacion": str(evaluacion.id_evaluacion),
                 "id_transaccion": str(id_transaccion),
+                "id_cuenta": str(id_cuenta) if id_cuenta else None,
+                "monto": monto,
                 "prioridad": prioridad,
                 "score_riesgo": score,
                 "resultado": resultado
@@ -90,9 +94,17 @@ def _worker():
                 try:
                     payload = json.loads(body.decode("utf-8"))
                     if method.routing_key == EVENT_CARD_AUTHORIZED:
-                        _evaluar_monto(uuid.UUID(payload["id_autorizacion"]), float(payload["monto"]))
+                        _evaluar_monto(
+                            uuid.UUID(payload["id_autorizacion"]),
+                            float(payload["monto"]),
+                            uuid.UUID(payload["id_cuenta"]) if payload.get("id_cuenta") else None,
+                        )
                     elif method.routing_key == EVENT_TRANSFER_COMPLETED:
-                        _evaluar_monto(uuid.UUID(payload["id_transferencia"]), float(payload["monto"]))
+                        _evaluar_monto(
+                            uuid.UUID(payload["id_transferencia"]),
+                            float(payload["monto"]),
+                            uuid.UUID(payload["id_cuenta_origen"]) if payload.get("id_cuenta_origen") else None,
+                        )
                     ch.basic_ack(delivery_tag=method.delivery_tag)
                 except Exception as exc:
                     logger.exception("Error procesando mensaje %s: %s", method.routing_key, exc)
