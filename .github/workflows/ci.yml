@@ -17,6 +17,8 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Compila el codigo
         run: python -m compileall -q app
+      - name: Pruebas
+        run: pip install pytest && python -m pytest -q tests
       - name: La aplicacion importa correctamente
         run: python -c "import app.main"
         env:

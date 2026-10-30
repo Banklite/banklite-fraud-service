@@ -14,7 +14,7 @@ Evaluacion de riesgo, scoring y reglas antifraude; marca transacciones sospechos
 
 ## Tecnologias
 
-FastAPI, SQLAlchemy, PostgreSQL, RabbitMQ (pika). Externo: servicio de GeoIP. Python 3.12, Docker.
+FastAPI, SQLAlchemy, PostgreSQL, RabbitMQ (pika). Externo: geolocalizacion por IP (ip-api.com, con respaldo en ipwho.is e ipapi.co). Python 3.12, Docker.
 
 ## Despliegue
 
@@ -35,7 +35,7 @@ Desplegado en Render (plan gratuito: tarda hasta ~1 minuto en responder si estuv
 | `GET` | `/evaluations` | Evaluaciones realizadas |
 | `GET` | `/alerts` | Alertas generadas |
 | `PATCH` | `/alerts/{id}/resolve` | Resuelve una alerta |
-| `GET` | `/geoip/{ip}` | Geolocalizacion de una IP |
+| `GET` | `/geoip/{ip}` | Geolocalizacion de una IP (3 proveedores con respaldo) |
 | `GET` | `/health` | Estado del servicio |
 | `GET` | `/stats` | Contadores del servicio |
 
