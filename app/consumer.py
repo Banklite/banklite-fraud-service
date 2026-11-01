@@ -3,6 +3,8 @@ import logging
 import threading
 import time
 import uuid
+from urllib.parse import urlparse
+
 import pika
 from .config import settings
 from .database import SessionLocal
@@ -81,7 +83,7 @@ def _worker():
     while not _stop.is_set():
         connection = None
         try:
-            logger.info("Fraud consumer conectando a %s", settings.rabbitmq_url)
+            logger.info("Fraud consumer conectando a %s", urlparse(settings.rabbitmq_url).hostname)
             connection = pika.BlockingConnection(pika.URLParameters(settings.rabbitmq_url))
             channel = connection.channel()
             channel.exchange_declare(exchange=settings.events_exchange, exchange_type="topic", durable=True)
