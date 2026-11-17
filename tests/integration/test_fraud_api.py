@@ -53,13 +53,17 @@ def test_monto_alto_pasa_pero_queda_en_revision_con_alerta_media(client, sesione
 
 
 def test_monto_sobre_el_maximo_se_bloquea_con_alerta_alta(client, sesiones, reglas_y_bus):
-    r = _revisar(client, 6_000_000)
+    cuenta = uuid.uuid4()
+    r = _revisar(client, 6_000_000, cuenta)
 
     assert r.json()["resultado"] == "bloqueada" and r.json()["score_riesgo"] == 95.0
     assert "supera el maximo" in r.json()["motivo"]
     with sesiones() as db:
         assert db.query(AlertaFraude).one().prioridad == "alta"
-    assert reglas_y_bus.call_args.args[1]["prioridad"] == "alta"
+    datos = reglas_y_bus.call_args.args[1]
+    assert datos["prioridad"] == "alta"
+    # El evento lleva la cuenta y el monto: con eso notification y compliance ubican al titular
+    assert datos["id_cuenta"] == str(cuenta) and datos["monto"] == 6_000_000
 
 
 def test_la_sexta_transferencia_en_diez_minutos_se_bloquea_por_rafaga(client):

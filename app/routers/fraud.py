@@ -170,6 +170,9 @@ def evaluar_transferencia(payload: TransferCheckIn, db: Session = Depends(get_db
             "id_alerta": str(alerta.id_alerta),
             "id_evaluacion": str(evaluacion.id_evaluacion),
             "id_transaccion": str(payload.id_transferencia),
+            # notification y compliance resuelven al titular a partir de la cuenta
+            "id_cuenta": str(payload.id_cuenta_origen),
+            "monto": monto,
             "prioridad": prioridad,
             "score_riesgo": score,
             "resultado": resultado,
