@@ -90,6 +90,25 @@ uvicorn app.main:app --reload --port 8006
 
 Prueba: abre <http://localhost:8006/docs>.
 
+## Pruebas automatizadas
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest tests -v --cov=app --cov-report=term-missing --cov-report=html
+```
+
+No necesitan PostgreSQL, RabbitMQ ni los otros microservicios: la base es SQLite en memoria y las dependencias externas se reemplazan con mocks (`unittest.mock`). El reporte navegable queda en `htmlcov/index.html`.
+
+| Tipo | Archivo | Que verifica |
+|---|---|---|
+| Unitaria (mocks) | `tests/unit/test_geoip.py` | Geolocalizacion de IP con tres proveedores en cascada, pausa del proveedor caido y cache. |
+| Unitaria (mocks) | `tests/unit/test_evaluacion_por_evento.py` | Score y prioridad segun cuanto supera el monto al umbral; alerta y evento `fraud.alert` (sesion de base y bus simulados con `MagicMock`). |
+| Integracion | `tests/integration/test_fraud_api.py` | `POST /fraud/check-transfer` contra la base con las reglas por defecto: monto maximo, monto alto, rafaga en 10 minutos y acumulado diario; alertas y su resolucion. |
+
+Resultado actual: **30 pruebas** (15 unitarias y 15 de integracion), todas aprobadas, con **81 % de cobertura** de `app/`.
+
+En GitHub Actions las pruebas corren en cada `push` y `pull request`. Si una falla, la imagen no se construye y no se despliega. El reporte de cobertura queda en el resumen de la ejecucion y como artefacto descargable `coverage-banklite-fraud-service`.
+
 ## Repositorios del proyecto
 
 `banklite-identity-service`, `banklite-account-service`, `banklite-ledger-service`, `banklite-transfer-service`, `banklite-card-service`, `banklite-fraud-service`, `banklite-notification-service`, `banklite-compliance-service`. Panel web: `services/web-panel` en el repositorio `banklite-microservicios`.
